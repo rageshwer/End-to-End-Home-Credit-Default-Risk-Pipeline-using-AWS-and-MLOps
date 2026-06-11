@@ -19,7 +19,8 @@ def sample_bureau():
             "CREDIT_DAY_OVERDUE": [10],
             "CNT_CREDIT_PROLONG": [1],
             "DAYS_CREDIT": [-200],
-            "DAYS_CREDIT_UPDATE": [-20]
+            "DAYS_CREDIT_UPDATE": [-20],
+            "CREDIT_CURRENCY": ["currency 1"]
         }
     )
     

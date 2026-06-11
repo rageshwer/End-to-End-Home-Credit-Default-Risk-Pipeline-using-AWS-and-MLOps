@@ -1,6 +1,7 @@
 data/
 models/
 mlruns/
+artifacts/
 notebooks/test_runs.ipynb
 __pycache__/
 .ipynb_checkpoints/
