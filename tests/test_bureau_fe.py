@@ -2,9 +2,9 @@ import pandas as pd
 from src.features.bureau_features import create_bureau_features
 
 # Sample dataset that will be fed to the function that creates the bureau features
-sample= pd.read_csv('mock_data/raw/bureau_sample.csv')
+sample= pd.read_csv('tests/mock_data/raw/bureau_sample.csv')
 result=create_bureau_features(sample.copy())
-result.to_parquet('mock_data/processed/bureau_fe.parquet')
+result.to_parquet('tests/mock_data/processed/bureau_fe.parquet')
 
 def sample_bureau():
     return sample.copy()

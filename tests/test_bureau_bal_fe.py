@@ -1,9 +1,9 @@
 import pandas as pd
 from src.features.bureau_bal_features import create_bureau_balance_features
 
-sample= pd.read_csv('mock_data/raw/bureau_balance_sample.csv')
+sample= pd.read_csv('tests/mock_data/raw/bureau_balance_sample.csv')
 result=create_bureau_balance_features(sample.copy())
-result.to_parquet('mock_data/processed/bureau_balance_fe.parquet')
+result.to_parquet('tests/mock_data/processed/bureau_balance_fe.parquet')
 
 def sample_bureau():
     return sample.copy()

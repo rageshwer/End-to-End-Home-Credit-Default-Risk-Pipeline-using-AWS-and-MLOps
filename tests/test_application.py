@@ -2,18 +2,18 @@
 import pandas as pd
 from src.features.application_features import create_application_features
 
-sample= pd.read_csv('mock_data/raw/application_train_sample.csv')
+sample= pd.read_csv('tests/mock_data/raw/application_train_sample.csv')
 target=sample['TARGET']
 sample=sample.drop('TARGET',axis=1)
 
 result=create_application_features(sample.copy())
 result_=result.copy()
 result_['TARGET']=target
-result_.to_parquet('mock_data/processed/app_train_fe.parquet')
+result_.to_parquet('tests/mock_data/processed/app_train_fe.parquet')
 
-sample_t=pd.read_csv('mock_data/raw/application_test_sample.csv')
+sample_t=pd.read_csv('tests/mock_data/raw/application_test_sample.csv')
 result_t=create_application_features(sample_t)
-result_t.to_parquet('mock_data/processed/app_test_fe.parquet')
+result_t.to_parquet('tests/mock_data/processed/app_test_fe.parquet')
 
 def application_sample():
     return sample.copy()

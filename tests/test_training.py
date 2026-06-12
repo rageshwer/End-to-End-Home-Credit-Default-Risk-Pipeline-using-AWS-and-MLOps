@@ -4,7 +4,7 @@ from src.training.train_save_model import prepare_train_data,train_cv
 from src.training.utils import save_artifacts
 
 def test_train_save():
-    train=pd.read_parquet('mock_data/processed/final_train.parquet')
+    train=pd.read_parquet('tests/mock_data/processed/final_train.parquet')
     _,_,cat_cols=prepare_train_data(train,'TARGET')
     model,feature_importance_mean,cv_scores,overall_auc,params,feature_names = train_cv(train,cat_cols,target='TARGET')
     save_artifacts(
