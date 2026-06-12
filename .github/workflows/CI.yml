@@ -29,6 +29,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Create test directories
+        run: |
+          mkdir -p tests/mock_data/processed
+
       - name: Run Application FE Test
         run: |
           python -m pytest tests/test_application.py -v
