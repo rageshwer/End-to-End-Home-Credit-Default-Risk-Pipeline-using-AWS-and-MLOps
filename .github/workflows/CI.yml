@@ -31,23 +31,23 @@ jobs:
 
       - name: Run Application FE Test
         run: |
-          pytest tests/test_application.py -v
+          python -m pytest tests/test_application.py -v
 
       - name: Run Bureau Balance FE Test
         run: |
-          pytest tests/test_bureau_bal_fe.py -v
+          python -m pytest tests/test_bureau_bal_fe.py -v
 
       - name: Run Bureau FE Test
         run: |
-          pytest tests/test_bureau_fe.py -v
+          python -m pytest tests/test_bureau_fe.py -v
 
       - name: Run Final Train Matrix Test
         run: |
-          pytest tests/test_final_matrix.py -v
+          python -m pytest tests/test_final_matrix.py -v
 
       - name: Run Training Test
         run: |
-          pytest tests/test_training.py -v
+          python -m pytest tests/test_training.py -v
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
