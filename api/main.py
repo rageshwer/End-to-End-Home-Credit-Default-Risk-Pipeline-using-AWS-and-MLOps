@@ -2,14 +2,17 @@ from fastapi import FastAPI,Path
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel,Field,field_validator
 from typing import Annotated
-import json
-import joblib
-import pickle
+import mlflow
+from mlflow.lightgbm import load_model
 import pandas as pd
 from config.config import top_features_750
 
 # Loading the model
-model=joblib.load('artifacts/lgbm_model.pkl')
+mlflow.set_tracking_uri('sqlite:///mlflow.db')
+
+# Update this string whenever you train a better model run!
+RUN_ID = "0d56e73910154a488178f99b40c66367" 
+model = mlflow.lightgbm.load_model(f"runs:/{RUN_ID}/lgbm_750feat")
 
 # Loading the application test dataset features
 app_test=pd.read_parquet('data/processed/final_test.parquet')

@@ -42,9 +42,9 @@ if st.button("Predict Risk", use_container_width=True):
             st.progress(float(probability))
 
             if probability >= 0.08:
-                st.error("High Risk Customer")
+                st.error("The borrower has high default probability.")
             else:
-                st.success("Low Risk Customer")
+                st.success("Low Risk Customer. Move forward with credit.")
 
         else:
             error = response.json().get("detail", "Unknown error")

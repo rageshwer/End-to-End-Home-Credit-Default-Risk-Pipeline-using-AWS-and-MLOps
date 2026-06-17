@@ -52,7 +52,7 @@ def train_cv(df:pd.DataFrame,cat_cols:list,target:str,ci_mode:bool=False):
     # Logging parameters if active experimentation run
     if mlflow.active_run():
         mlflow.log_params(params)
-        mlflow.log_param('Folds (stratified)',N_SPLITS)
+        mlflow.log_param('Folds_Straified',N_SPLITS)
 
     # ============================================================
     skf = StratifiedKFold(
@@ -174,9 +174,11 @@ def main():
     X,y,cat_cols = prepare_train_data(train_df,'TARGET')
     
 
-    mlflow.set_experiment("Home-Credit")
-    mlflow.set_tracking_uri('sqlite://mlflow.db')
-    with mlflow.start_run():
+    mlflow.set_tracking_uri('sqlite:///mlflow.db')
+    exp=mlflow.set_experiment("Home-Credit")
+    exp_id=exp.experiment_id
+
+    with mlflow.start_run(experiment_id=exp_id):
         # Training
         _,feature_importance_mean,params = train_cv(train_df,cat_cols,target='TARGET')
         # Keeping model so that in testing, we dont have to train separately. 
@@ -192,14 +194,18 @@ def main():
         )
 
         # Logging the final model and mean feature importances of all folds
-        mlflow.lightgbm.log_model(final_model,name='lgbm_750feat')
+        requirements = ['docker==7.1.0', 'fastapi==0.137.1', 'joblib==1.5.3', 'lightgbm==4.6.0', 'matplotlib==3.11.0','mlflow==3.14.0',
+                        'numpy==2.4.6', 'pandas==2.3.3', 'pydantic==2.13.4', 'pytest==9.1.0', 'requests==2.34.2','scikit-learn==1.9.0',
+                        'scipy==1.17.1', 'seaborn==0.13.2', 'skops==0.14.0', 'starlette==1.3.1', 'streamlit==1.58.0', 'uvicorn==0.49.0']        
+        
+        mlflow.lightgbm.log_model(final_model,name='lgbm_750feat',pip_requirements=requirements)
 
         fi_filename = "feature_importance.csv"
         feature_importance_mean.to_csv(fi_filename, index=False)
         mlflow.log_artifact(fi_filename)
         if os.path.exists(fi_filename):
             os.remove(fi_filename)
-
+        print('The final model trained on full train dataset and Feature importance csv logged.')
 
 
 if __name__ == "__main__":
