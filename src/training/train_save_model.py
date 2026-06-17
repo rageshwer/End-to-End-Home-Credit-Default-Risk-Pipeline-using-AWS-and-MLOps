@@ -1,11 +1,14 @@
 import warnings
 warnings.filterwarnings('ignore')
 import gc
+import os
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import roc_auc_score
 import lightgbm as lgb
+import mlflow
+from mlflow.lightgbm import log_model
 
 #============================================================
 # Methods
@@ -44,6 +47,12 @@ def train_cv(df:pd.DataFrame,cat_cols:list,target:str,ci_mode:bool=False):
         ),
         lgb.log_evaluation(period=200)
         ]
+
+    #=============================================================
+    # Logging parameters if active experimentation run
+    if mlflow.active_run():
+        mlflow.log_params(params)
+        mlflow.log_param('Folds (stratified)',N_SPLITS)
 
     # ============================================================
     skf = StratifiedKFold(
@@ -87,22 +96,24 @@ def train_cv(df:pd.DataFrame,cat_cols:list,target:str,ci_mode:bool=False):
 
             callbacks=callbacks
         )
-        valid_preds = model.predict_proba(
-        X_valid,
-        num_iteration=model.best_iteration_
-        )[:, 1]
+        valid_preds = model.predict_proba(X_valid,num_iteration=model.best_iteration_)[:, 1]
         oof_preds[valid_idx] = valid_preds
 
-        fold_auc = roc_auc_score(
-        y_valid,
-        valid_preds)
+        fold_auc = roc_auc_score(y_valid,valid_preds)
         cv_scores.append(fold_auc)
         print(f"Fold {fold} AUC = {fold_auc:.6f}")
 
+        # Save this fold's AUC in MLFLOW :
+        if mlflow.active_run():
+            mlflow.log_metric(f'Fold {fold} AUC',fold_auc)
+
+        # Feature importances in this fold
         fold_importance = pd.DataFrame({
         'feature': top_features_750,
         'importance': model.feature_importances_,
         'fold': fold})
+
+        # Feature importances appended of all folds
         feature_importance = pd.concat(
             [feature_importance, fold_importance],
             axis=0,
@@ -113,9 +124,9 @@ def train_cv(df:pd.DataFrame,cat_cols:list,target:str,ci_mode:bool=False):
     # Printing overall CV score after the last fold
     overall_auc = roc_auc_score(y,oof_preds)
     print(f"Mean CV AUC : {np.mean(cv_scores):.6f}")
-    print(f"Std CV AUC  : {np.std(cv_scores):.6f}")
     print(f"OOF AUC      : {overall_auc:.6f}")
 
+    # The mean of feature importances given in each fold
     feature_importance_mean = (
     feature_importance
     .groupby('feature')['importance']
@@ -126,7 +137,13 @@ def train_cv(df:pd.DataFrame,cat_cols:list,target:str,ci_mode:bool=False):
         ascending=False
     ))
 
-    return model,feature_importance_mean,cv_scores, overall_auc,params,top_features_750
+    # Logging the mean AUC of all folds, the global AUC 
+    if mlflow.active_run():
+        mlflow.log_metric('Mean AUC of Folds',np.mean(cv_scores))
+        mlflow.log_metric('Overall AUC',overall_auc)
+    
+
+    return model,feature_importance_mean,params
 
 
 def prepare_train_data(train_df:pd.DataFrame,target:str):
@@ -156,29 +173,33 @@ def main():
     train_df=load_data('data/interim/final_train.parquet')
     X,y,cat_cols = prepare_train_data(train_df,'TARGET')
     
-    # Training
-    model,feature_importance_mean,cv_scores,overall_auc,params,feature_names = train_cv(train_df,cat_cols,target='TARGET')
-    # Keeping model so that in testing, we dont have to train separately. 
-    # We can directly load the model and save in artifacts.
-    # Saving artifacts
 
-    final_model=lgb.LGBMClassifier(
-        **params
-    ).fit(
-        X,
-        y,
-        categorical_feature=cat_cols
-    )
+    mlflow.set_experiment("Home-Credit")
+    mlflow.set_tracking_uri('sqlite://mlflow.db')
+    with mlflow.start_run():
+        # Training
+        _,feature_importance_mean,params = train_cv(train_df,cat_cols,target='TARGET')
+        # Keeping model so that in testing, we dont have to train separately. 
+        # We can directly load the model and save in artifacts.
+        # Saving artifacts
 
-    from src.training.utils import save_artifacts 
-    save_artifacts(
-    model=final_model,
-    feature_names=feature_names,
-    feature_importance=feature_importance_mean,
-    params=params,
-    oof_auc=overall_auc,
-    cv_scores=cv_scores,
-    )
+        final_model=lgb.LGBMClassifier(
+            **params
+        ).fit(
+            X,
+            y,
+            categorical_feature=cat_cols
+        )
+
+        # Logging the final model and mean feature importances of all folds
+        mlflow.lightgbm.log_model(final_model,name='lgbm_750feat')
+
+        fi_filename = "feature_importance.csv"
+        feature_importance_mean.to_csv(fi_filename, index=False)
+        mlflow.log_artifact(fi_filename)
+        if os.path.exists(fi_filename):
+            os.remove(fi_filename)
+
 
 
 if __name__ == "__main__":

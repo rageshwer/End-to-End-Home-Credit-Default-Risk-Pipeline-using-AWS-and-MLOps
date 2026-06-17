@@ -1,25 +1,14 @@
 import pandas as pd
-import os
+import os,shutil
 from src.training.train_save_model import prepare_train_data,train_cv
-from src.training.utils import save_artifacts
 
 def test_train_save():
     train=pd.read_parquet('tests/mock_data/processed/final_train.parquet')
     _,_,cat_cols=prepare_train_data(train,'TARGET')
-    model,feature_importance_mean,cv_scores,overall_auc,params,feature_names = train_cv(train,cat_cols,target='TARGET')
-    save_artifacts(
-    model=model,
-    feature_names=feature_names,
-    feature_importance=feature_importance_mean,
-    params=params,
-    oof_auc=overall_auc,
-    cv_scores=cv_scores,
-    )
+    model,feature_importance_mean,_ = train_cv(train,cat_cols,target='TARGET',ci_mode=True)
 
-    assert model is not None
-
-    assert len(feature_names) > 0
-
-    assert len(cv_scores) > 0
-
-    assert os.path.exists("artifacts")
+    assert model is not None, "Model failed to instantiate and train."
+    assert isinstance(feature_importance_mean, pd.DataFrame), "Feature importance object must be a pandas DataFrame."
+    assert not feature_importance_mean.empty, "Feature importance data cannot be empty."
+    assert "importance" in feature_importance_mean.columns, "Missing 'importance' metric column."
+    
