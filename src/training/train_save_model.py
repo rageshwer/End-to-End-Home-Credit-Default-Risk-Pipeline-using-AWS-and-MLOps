@@ -4,8 +4,11 @@ import gc
 import os
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
 from sklearn.model_selection import StratifiedKFold
-from sklearn.metrics import roc_auc_score
+from sklearn.metrics import roc_auc_score,precision_score,recall_score,confusion_matrix
+from scipy.stats import ks_2samp
 import lightgbm as lgb
 import mlflow
 from mlflow.lightgbm import log_model
@@ -51,7 +54,6 @@ def train_cv(df:pd.DataFrame,cat_cols:list,target:str,ci_mode:bool=False):
     #=============================================================
     # Logging parameters if active experimentation run
     if mlflow.active_run():
-        mlflow.log_params(params)
         mlflow.log_param('Folds_Straified',N_SPLITS)
 
     # ============================================================
@@ -63,6 +65,7 @@ def train_cv(df:pd.DataFrame,cat_cols:list,target:str,ci_mode:bool=False):
 
     oof_preds = np.zeros(len(df))
     cv_scores = []
+    best_trees=[]
     feature_importance = pd.DataFrame()
     #============================================================
     # Training loop
@@ -98,6 +101,10 @@ def train_cv(df:pd.DataFrame,cat_cols:list,target:str,ci_mode:bool=False):
         )
         valid_preds = model.predict_proba(X_valid,num_iteration=model.best_iteration_)[:, 1]
         oof_preds[valid_idx] = valid_preds
+        # The avg of best iteration of each fold will give the number of trees for final model training.
+        # Because the final train has no early stopping, it will create the trees specified leading to overfitting.
+        # So, we give the average of trees used in each folds to the final train model.
+        best_trees.append(model.best_iteration_)
 
         fold_auc = roc_auc_score(y_valid,valid_preds)
         cv_scores.append(fold_auc)
@@ -126,6 +133,21 @@ def train_cv(df:pd.DataFrame,cat_cols:list,target:str,ci_mode:bool=False):
     print(f"Mean CV AUC : {np.mean(cv_scores):.6f}")
     print(f"OOF AUC      : {overall_auc:.6f}")
 
+    # Calculating the Kolmogorov Statistic
+    good_loans = oof_preds[y == 0]
+    bad_loans = oof_preds[y == 1]
+    ks_stat, _ = ks_2samp(good_loans, bad_loans)
+    ks_percentage = ks_stat * 100
+    print(f"OOF KS Statistic: {ks_percentage:.2f}%")
+
+    THRESHOLD = 0.1  # Tuning this is critical for 92:8 imbalance!
+    oof_classes = (oof_preds >= THRESHOLD).astype(int)
+
+    # Calculating other metrics using binary classifications
+    precision = precision_score(y, oof_classes)
+    recall = recall_score(y, oof_classes)
+    cm = confusion_matrix(y, oof_classes)
+
     # The mean of feature importances given in each fold
     feature_importance_mean = (
     feature_importance
@@ -137,13 +159,26 @@ def train_cv(df:pd.DataFrame,cat_cols:list,target:str,ci_mode:bool=False):
         ascending=False
     ))
 
-    # Logging the mean AUC of all folds, the global AUC 
+    # Logging the mean AUC of all folds, the global AUC and other metrics(precision, recall and cm)
     if mlflow.active_run():
         mlflow.log_metric('Mean AUC of Folds',np.mean(cv_scores))
         mlflow.log_metric('Overall AUC',overall_auc)
-    
+        mlflow.log_metric('Precision',precision)
+        mlflow.log_metric('Recall',recall)
+        mlflow.log_metric('OOF Kolmogorov Statistic',ks_percentage)
+        plt.figure(figsize=(6, 5))
+        sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=['Non-Default', 'Default'], yticklabels=['Non-Default', 'Default'])
+        plt.ylabel('Actual')
+        plt.xlabel('Predicted')
+        plt.title('OOF Confusion Matrix')
+        cm_filename = "confusion_matrix.png"
+        plt.savefig(cm_filename)
+        plt.close()
+        mlflow.log_artifact(cm_filename)
+        if os.path.exists(cm_filename):
+            os.remove(cm_filename)
 
-    return model,feature_importance_mean,params
+    return model,feature_importance_mean,params,int(np.mean(best_trees))
 
 
 def prepare_train_data(train_df:pd.DataFrame,target:str):
@@ -180,19 +215,22 @@ def main():
 
     with mlflow.start_run(experiment_id=exp_id):
         # Training
-        _,feature_importance_mean,params = train_cv(train_df,cat_cols,target='TARGET')
+        _,feature_importance_mean,params,avg_tree_count = train_cv(train_df,cat_cols,target='TARGET')
         # Keeping model so that in testing, we dont have to train separately. 
         # We can directly load the model and save in artifacts.
-        # Saving artifacts
-
+        
+        final_params=params.copy()
+        final_params['n_estimators']=avg_tree_count
         final_model=lgb.LGBMClassifier(
-            **params
+            **final_params
         ).fit(
             X,
             y,
-            categorical_feature=cat_cols
+            categorical_feature=cat_cols,
         )
 
+        # Logging parameters
+        mlflow.log_params(final_params)
         # Logging the final model and mean feature importances of all folds
         requirements = ['docker==7.1.0', 'fastapi==0.137.1', 'joblib==1.5.3', 'lightgbm==4.6.0', 'matplotlib==3.11.0','mlflow==3.14.0',
                         'numpy==2.4.6', 'pandas==2.3.3', 'pydantic==2.13.4', 'pytest==9.1.0', 'requests==2.34.2','scikit-learn==1.9.0',
