@@ -116,15 +116,14 @@ def waterfall(id:int)->JSONResponse:
     validate_id_obj=validate_id(app_id=id)
     sk_id=validate_id_obj.app_id
 
-    # 1. Fetch the SHAP row and Raw row for this specific ID
+    # Fetch the SHAP row and Raw row for this specific ID
     shap_row = lookup_df[lookup_df['SK_ID_CURR'] == sk_id].iloc[0]
     raw_row = app_test[app_test['SK_ID_CURR'] == sk_id].iloc[0]
 
-    # 2. Extract or define the base value (expected value)
-    # If expected_value isn't a column, change this to your known model baseline (e.g., 0.35)
+    # Extract or define the base value (expected value)
     base_value = float(shap_row.get('base_value')) 
 
-    # 3. Pair SHAP values with Raw values across all 750 features
+    # Pair SHAP values with Raw values across all 750 features
     all_features = []
     for col in features:
         shap_val = float(shap_row.get(f'shap_{col}', 0.0))
@@ -142,15 +141,15 @@ def waterfall(id:int)->JSONResponse:
             "shap_value": shap_val
         })
 
-    # 4. Sort all features by absolute SHAP value (descending impact)
+    # Sort all features by absolute SHAP value (descending impact)
     all_features.sort(key=lambda x: abs(x["shap_value"]), reverse=True)
 
-    # 5. Segment into Top 10 and the rest
+    # Segment into Top 10 and the rest
     max_display = 10
     top_features = all_features[:max_display]
     rest_features = all_features[max_display:]
 
-    # 6. Aggregate the remaining 740 features into a single element
+    # Aggregate the remaining 740 features into a single element
     if rest_features:
         rest_shap_sum = sum(f["shap_value"] for f in rest_features)
         top_features.append({
@@ -159,7 +158,7 @@ def waterfall(id:int)->JSONResponse:
             "shap_value": round(rest_shap_sum, 6)
         })
 
-    # 7. Calculate total prediction value from the sliced data matrix
+    # Calculate total prediction value from the sliced data matrix
     total_shap_sum = sum(float(shap_row.get(f'shap_{col}', 0.0)) for col in features)
     prediction_value = base_value + total_shap_sum
 
@@ -170,3 +169,26 @@ def waterfall(id:int)->JSONResponse:
     }
 
     return JSONResponse(status_code=200,content=content)
+
+# Endpoint for dependency plots
+@app.post('/dependence')
+def dependency_plot(feat:str,int_feat:str)->JSONResponse:
+    # Sending the feature raw values and shap values 
+    ids = lookup_df['SK_ID_CURR'].head(1000).astype(int).values
+    
+    # Extract and format 3 lists frontend needs
+    shap_sub = lookup_df[lookup_df['SK_ID_CURR'].isin(ids)].set_index('SK_ID_CURR').reindex(ids)
+    raw_sub = app_test[app_test['SK_ID_CURR'].isin(ids)].set_index('SK_ID_CURR').reindex(ids)
+
+    s_series = shap_sub[f'shap_{feat}'].fillna(0)
+    r_series = raw_sub[feat].replace([np.inf, -np.inf], np.nan)
+    i_series = raw_sub[int_feat].replace([np.inf, -np.inf], np.nan)
+
+    shap_feat = s_series.tolist()
+    raw_feat = [None if pd.isna(x) else x for x in r_series]
+    raw_int_feat = [None if pd.isna(x) else x for x in i_series]
+    return JSONResponse(status_code=200, content={
+        'raw_feat': raw_feat,
+        'raw_int_feat': raw_int_feat,
+        'shap_feat': shap_feat
+    })
