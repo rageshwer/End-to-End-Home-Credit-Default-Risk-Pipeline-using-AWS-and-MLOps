@@ -561,7 +561,7 @@ with right:
         "Interaction Feature",features_list)
 
     # API Call for dependence plot:
-    dep_plot=st.button('Submit')
+    dep_plot=st.button('Generate')
     if dep_plot:
         response4=requests.post(f'{API_URL}/dependence',params={'feat':feature,'int_feat':interaction_feature})
         if response4.status_code==200:
