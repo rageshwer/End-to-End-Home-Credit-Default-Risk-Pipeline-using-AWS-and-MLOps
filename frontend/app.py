@@ -35,7 +35,7 @@ def load_batch():
 
 @st.cache_data
 def load_ids():
-    app_ids=pd.read_parquet('data/app_ids.parquet')
+    app_ids=pd.read_parquet('ui_data/app_ids.parquet')
     return app_ids['SK_ID_CURR'].astype(int).unique().tolist()
 
 existing_ids=load_ids()
