@@ -1,0 +1,10 @@
+docker==7.1.0
+matplotlib==3.11.0
+numpy==2.4.6
+pandas==2.3.3
+plotly==6.8.0
+pyarrow==24.0.0
+requests==2.34.2
+shap==0.52.0
+skops==0.14.0
+streamlit==1.58.0

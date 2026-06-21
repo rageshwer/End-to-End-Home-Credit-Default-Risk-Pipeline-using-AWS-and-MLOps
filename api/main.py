@@ -8,30 +8,29 @@ from mlflow.lightgbm import load_model
 import pandas as pd
 import numpy as np
 
-def load_model(RUN_ID):
+def load_model():
     # Loading the model
-    mlflow.set_tracking_uri('sqlite:///mlflow.db')
-    # Update this string whenever we train a better model run! 
-    return mlflow.lightgbm.load_model(f"runs:/{RUN_ID}/lgbm_750feat")
+    model_s3_uri = "s3://home-credit-models/artifacts"
+    return mlflow.lightgbm.load_model(model_s3_uri)
 
 # Loading the application test dataset features
 @lru_cache
 def load_test_data():
     # Load the full dataframe so we can query rows later
-    df = pd.read_parquet('api/data/final_test.parquet')
+    df = pd.read_parquet('data/final_test.parquet')
     df['SK_ID_CURR'] = df['SK_ID_CURR'].astype(int)
     valid_ids = set(df['SK_ID_CURR'].tolist())
     return df, valid_ids
 
 @lru_cache
 def load_lookup():
-    df=pd.read_parquet('api/data/lookup_df.parquet')
+    df=pd.read_parquet('data/lookup_df.parquet')
     return df
 
 #================================================================================================
 
 # Load the model using run_id
-model=load_model("01fa115e85d34f5da1de226caca345eb")
+model=load_model()
 features=model.feature_name_
 # Loading the dataframes
 app_test, existing_ids = load_test_data()

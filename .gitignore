@@ -4,6 +4,7 @@ mlruns/
 artifacts/
 notebooks/test_runs.ipynb
 __pycache__/
+.pytest_cache/
 .ipynb_checkpoints/
 
 venv/

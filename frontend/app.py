@@ -7,6 +7,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 import requests
 from plotly.subplots import make_subplots
+import os
 
 st.set_page_config(
     page_title="Home-Credit Risk Scoring Portal",
@@ -14,7 +15,7 @@ st.set_page_config(
     layout="wide"
 )
 
-API_URL = "http://127.0.0.1:8000"
+API_URL = os.getenv("API_URL", "http://localhost:8000")
 
 @st.cache_data
 def load_batch():
@@ -34,7 +35,7 @@ def load_batch():
 
 @st.cache_data
 def load_ids():
-    app_ids=pd.read_parquet('frontend/data/app_ids.parquet')
+    app_ids=pd.read_parquet('data/app_ids.parquet')
     return app_ids['SK_ID_CURR'].astype(int).unique().tolist()
 
 existing_ids=load_ids()
@@ -560,34 +561,36 @@ with right:
         "Interaction Feature",features_list)
 
     # API Call for dependence plot:
-    response4=requests.post(f'{API_URL}/dependence',params={'feat':feature,'int_feat':interaction_feature})
-    if response4.status_code==200:
-        response4=response4.json()
-        fig = px.scatter(
-            x=response4['raw_feat'],
-            y=response4['shap_feat'],
-            color=response4['raw_int_feat'],
-            color_continuous_scale="Viridis",  # Smooth color scale for numeric, distinct colors for categories
-            labels={
-                "x": f"Actual {feature}",
-                "y": f"SHAP Value ({feature})",
-                "color": interaction_feature
-            },
-            title=f"How {feature} Affects Predictions (Colored by {interaction_feature})"
-        )
-        
-        # Clean background template
-        fig.update_layout(
-            template="plotly_white",
-            paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor="rgba(0,0,0,0)",
-            font=dict(family="Inter, sans-serif", size=12, color="#374151"),
-            title_font=dict(size=16, color="#0b1e4a")
-        )
-        
-        # Render in Streamlit
-        st.plotly_chart(fig, use_container_width=True)
+    dep_plot=st.button('Submit')
+    if dep_plot:
+        response4=requests.post(f'{API_URL}/dependence',params={'feat':feature,'int_feat':interaction_feature})
+        if response4.status_code==200:
+            response4=response4.json()
+            fig = px.scatter(
+                x=response4['raw_feat'],
+                y=response4['shap_feat'],
+                color=response4['raw_int_feat'],
+                color_continuous_scale="Viridis",  # Smooth color scale for numeric, distinct colors for categories
+                labels={
+                    "x": f"Actual {feature}",
+                    "y": f"SHAP Value ({feature})",
+                    "color": interaction_feature
+                },
+                title=f"How {feature} Affects Predictions (Colored by {interaction_feature})"
+            )
+            
+            # Clean background template
+            fig.update_layout(
+                template="plotly_white",
+                paper_bgcolor="rgba(0,0,0,0)",
+                plot_bgcolor="rgba(0,0,0,0)",
+                font=dict(family="Inter, sans-serif", size=12, color="#374151"),
+                title_font=dict(size=16, color="#0b1e4a")
+            )
+            
+            # Render in Streamlit
+            st.plotly_chart(fig, use_container_width=True)
 
 
-    else:
-        st.error("Could not retrieve dependency data!")
+        else:
+            st.error("Could not retrieve dependency data!")
