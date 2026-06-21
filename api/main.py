@@ -17,15 +17,15 @@ def load_model():
 @lru_cache
 def load_test_data():
     # Load the full dataframe so we can query rows later
-    s3_uri = 's3://home-credit-models/final_test.parquet'
-    df = pd.read_parquet(s3_uri)
+    df = pd.read_parquet('api_data/final_test.parquet')
     df['SK_ID_CURR'] = df['SK_ID_CURR'].astype(int)
     valid_ids = set(df['SK_ID_CURR'].tolist())
     return df, valid_ids
 
 @lru_cache
 def load_lookup():
-    df=pd.read_parquet('api_data/lookup_df.parquet')
+    s3_uri = 's3://home-credit-models/lookup_df.parquet'
+    df = pd.read_parquet(s3_uri)
     return df
 
 #================================================================================================
