@@ -1,4 +1,4 @@
-# 🏦 Home Credit Risk Scoring Portal
+#  Home Credit Risk Scoring Portal
 ### End-to-End Enterprise Credit Risk Modeling, Explainable AI & MLOps Platform
 
 An enterprise-grade credit risk scoring platform that predicts **Probability of Default (PD)** for retail lending portfolios while providing **real-time explainability**, **portfolio-level analytics**, and **production-ready deployment infrastructure**.
@@ -7,7 +7,7 @@ The project was built using the Home Credit Default Risk datasets (Application, 
 
 ---
 
-## 📌 Business Problem
+##  Business Problem
 
 Financial institutions must accurately assess the likelihood of borrower default before approving loans.
 
@@ -27,7 +27,7 @@ This project addresses these challenges by building a production-grade risk scor
 
 ---
 
-## 🎯 Project Highlights
+##  Project Highlights
 
 ### Credit Risk Modeling
 - Built a Probability of Default (PD) prediction engine using **LightGBM**
@@ -61,7 +61,7 @@ Implemented real-time model interpretability using SHAP values:
 
 ---
 
-# 🏗 System Architecture
+#  System Architecture
 
 ```text
                      ┌──────────────────────┐
@@ -93,7 +93,7 @@ Implemented real-time model interpretability using SHAP values:
 
 ---
 
-# 📊 Dataset Overview
+#  Dataset Overview
 
 Dataset Source:
 
@@ -117,7 +117,7 @@ Core datasets used:
 
 ---
 
-# 🔬 Feature Engineering Pipeline
+#  Feature Engineering Pipeline
 
 A comprehensive feature engineering framework was developed to transform raw financial data into predictive risk signals.
 
@@ -197,7 +197,7 @@ Generated repayment behavior indicators:
 
 ---
 
-# 🤖 Model Development
+#  Model Development
 
 ## Algorithm
 
@@ -247,7 +247,7 @@ Improvement achieved through:
 
 ---
 
-# 📈 Experiment Tracking with MLflow
+#  Experiment Tracking with MLflow
 
 All experiments were tracked using MLflow.
 
@@ -267,7 +267,7 @@ Benefits:
 
 ---
 
-# 🧠 Explainable AI Dashboard
+#  Explainable AI Dashboard
 
 The platform includes a complete explainability layer.
 
@@ -319,7 +319,7 @@ Displays:
 
 ---
 
-# 🌐 Frontend Application
+#  Frontend Application
 
 Built using **Streamlit**.
 
@@ -334,7 +334,7 @@ Features:
 
 ---
 
-# ⚡ Backend API
+#  Backend API
 
 Built using **FastAPI**.
 
@@ -348,7 +348,7 @@ Capabilities:
 
 ---
 
-# ☁️ AWS Deployment
+#  AWS Deployment
 
 Deployed on AWS using a containerized architecture.
 
@@ -379,7 +379,7 @@ Docker Containers
 
 ---
 
-# 🐳 Containerization
+#  Containerization
 
 Each application layer is isolated inside Docker containers.
 
@@ -407,7 +407,7 @@ Benefits:
 
 ---
 
-# 🔄 CI/CD Pipeline
+#  CI/CD Pipeline
 
 Implemented automated DevOps workflows using GitHub Actions.
 
@@ -454,7 +454,7 @@ Unit tests cover:
 
 ---
 
-# 📁 Repository Structure
+#  Repository Structure
 
 ```text
 HOME_CREDIT_DEFAULT_RISK
@@ -490,7 +490,7 @@ HOME_CREDIT_DEFAULT_RISK
 
 ---
 
-# 🛠 Tech Stack
+#  Tech Stack
 
 ### Machine Learning
 - Python
