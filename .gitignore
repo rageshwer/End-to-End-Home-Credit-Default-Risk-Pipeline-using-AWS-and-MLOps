@@ -1,6 +1,7 @@
 data/
 models/
 mlruns/
+mlflow.db/
 artifacts/
 notebooks/test_runs.ipynb
 __pycache__/
