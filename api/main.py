@@ -140,7 +140,6 @@ def waterfall(id:int)->JSONResponse:
             "feature_value": raw_val,
             "shap_value": shap_val
         })
-
     # Sort all features by absolute SHAP value (descending impact)
     all_features.sort(key=lambda x: abs(x["shap_value"]), reverse=True)
 

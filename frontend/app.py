@@ -276,7 +276,6 @@ h3, .stSubheader, div[data-testid="stMarkdownContainer"] h3{
 # ==========================================================
 # SIDEBAR (branding / navigation only — no logic)
 # ==========================================================
-
 with st.sidebar:
     st.markdown("## Home Credit Datasets")
     st.markdown("**Risk Intelligence Suite**")
