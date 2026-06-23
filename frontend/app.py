@@ -287,7 +287,7 @@ with st.sidebar:
     st.markdown("T-3 Portfolio Analytics")
     st.markdown("---")
     st.markdown("##### Model")
-    st.markdown("LightGBM")
+    st.markdown("LightGBM v2")
     st.markdown("Last retrained: Q2 2026")
     st.markdown("---")
     st.caption("Internal decisioning tool · For credit risk analysts")
@@ -316,11 +316,11 @@ with st.expander("Model Metrics", expanded=True):
     with col1:
         st.metric("AUC","0.779")
     with col2:
-        st.metric("KS","41%")
+        st.metric("KS","41.8%")
     with col3:
-        st.metric("Recall","59%")
+        st.metric("Recall","72%")
     with col4:
-        st.metric("Precision","21%")
+        st.metric("Precision","17%")
 # ==========================================================
 # SECTION 1
 # ==========================================================
@@ -366,7 +366,7 @@ with col3:
         result = response.json()
         probability = result["Probability of Default :"]
         st.success("Prediction Successfull!")
-        if probability >= 0.08:
+        if probability >= 0.069:
             st.error("The borrower has high default probability.")
             decision = 'DECLINE'
         else:
@@ -487,8 +487,8 @@ if submit:
             
             # Display summary metrics
             col1, col2 = st.columns(2)
-            col1.metric("Baseline Score", f"{base_value:.4f}")
-            col2.metric("Final Risk Prediction", f"{prediction_value:.4f}")
+            col1.metric("Baseline Score", f"{1/1+np.exp(-base_value):.2f}")
+            col2.metric("Final Risk Prediction", f"{1/1+np.exp(-prediction_value):.2f}")
             
         else:
             st.error(f"Backend Error ({response3.status_code}): {response3.text}")

@@ -7,7 +7,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.model_selection import StratifiedKFold
-from sklearn.metrics import roc_auc_score,precision_score,recall_score,confusion_matrix
+from sklearn.metrics import roc_auc_score,precision_score,recall_score,confusion_matrix,roc_curve
 from scipy.stats import ks_2samp
 import lightgbm as lgb
 import mlflow
@@ -140,7 +140,20 @@ def train_cv(df:pd.DataFrame,cat_cols:list,target:str,ci_mode:bool=False):
     ks_percentage = ks_stat * 100
     print(f"OOF KS Statistic: {ks_percentage:.2f}%")
 
-    THRESHOLD = 0.1  # Tuning this is critical for 92:8 imbalance!
+    # ============================================================
+    # CALCULATING THE OPTIMAL THRESHOLD (Maximizing TPR - FPR)
+    # ============================================================
+    # Calculate False Positive Rates, True Positive Rates, and corresponding thresholds
+    fpr, tpr, thresholds = roc_curve(y, oof_preds)
+    
+    # Find the index where the vertical distance (KS gap) is maximized
+    optimal_idx = np.argmax(tpr - fpr)
+    optimal_threshold = thresholds[optimal_idx]
+    
+    print(f"Mathematical Optimal Threshold (Max KS): {optimal_threshold:.4f}")
+
+    # Dynamically apply the calculated optimal threshold
+    THRESHOLD = optimal_threshold  
     oof_classes = (oof_preds >= THRESHOLD).astype(int)
 
     # Calculating other metrics using binary classifications
@@ -159,10 +172,11 @@ def train_cv(df:pd.DataFrame,cat_cols:list,target:str,ci_mode:bool=False):
         ascending=False
     ))
 
-    # Logging the mean AUC of all folds, the global AUC and other metrics(precision, recall and cm)
+    # Logging the mean AUC of all folds, the global AUC and other metrics
     if mlflow.active_run():
         mlflow.log_metric('Mean AUC of Folds',np.mean(cv_scores))
         mlflow.log_metric('Overall AUC',overall_auc)
+        mlflow.log_metric('Optimal Threshold', optimal_threshold)  # Logged dynamically
         mlflow.log_metric('Precision',precision)
         mlflow.log_metric('Recall',recall)
         mlflow.log_metric('OOF Kolmogorov Statistic',ks_percentage)
@@ -236,7 +250,7 @@ def main():
                         'numpy==2.4.6', 'pandas==2.3.3', 'pydantic==2.13.4', 'pytest==9.1.0', 'requests==2.34.2','scikit-learn==1.9.0',
                         'scipy==1.17.1', 'seaborn==0.13.2', 'skops==0.14.0', 'starlette==1.3.1', 'streamlit==1.58.0', 'uvicorn==0.49.0']        
         
-        mlflow.lightgbm.log_model(final_model,name='lgbm_750feat',pip_requirements=requirements)
+        mlflow.lightgbm.log_model(final_model,name='lgbm_750feat2',pip_requirements=requirements)
 
         fi_filename = "feature_importance.csv"
         feature_importance_mean.to_csv(fi_filename, index=False)

@@ -10,7 +10,7 @@ import numpy as np
 
 def load_model():
     # Loading the model
-    model_s3_uri = "s3://home-credit-models/artifacts"
+    model_s3_uri = "s3://home-credit-models/artifacts2"
     return mlflow.lightgbm.load_model(model_s3_uri)
 
 # Loading the application test dataset features
