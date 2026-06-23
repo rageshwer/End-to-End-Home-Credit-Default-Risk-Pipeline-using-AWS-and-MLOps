@@ -486,8 +486,8 @@ if submit:
             
             # Display summary metrics
             col1, col2 = st.columns(2)
-            col1.metric("Baseline Score", f"{1/1+np.exp(-base_value):.2f}")
-            col2.metric("Final Risk Prediction", f"{1/1+np.exp(-prediction_value):.2f}")
+            col1.metric("Baseline Score", f"{1/(1+np.exp(-base_value)):.2f}")
+            col2.metric("Final Risk Prediction", f"{1/(1+np.exp(-prediction_value)):.2f}")
             
         else:
             st.error(f"Backend Error ({response3.status_code}): {response3.text}")
